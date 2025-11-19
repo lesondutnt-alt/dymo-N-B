@@ -1,111 +1,101 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Localisation de la Dymo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f6f6f6;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: center;
-      max-width: 450px;
-      width: 100%;
-    }
-    h1 {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-    select, button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 12px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    button {
-      background: #e8e8e8;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    button:hover {
-      background: #dcdcdc;
-    }
-    .result {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #333;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Localisation Dymo</title>
+<style>
+  body { font-family: Arial; background:#f6f6f6; padding:20px; }
+  .card { background:white; padding:20px; max-width:500px; margin:auto; border-radius:12px; box-shadow:0 0 10px #0002; }
+  select, button { width:100%; padding:10px; border-radius:8px; margin-top:10px; }
+  .status { margin-top:20px; padding:10px; background:#eee; border-radius:8px; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Dymo Noir sur Blanc – Localisation</h1>
+<div class="card">
+  <h2>Dymo Noir sur Blanc — Localisation</h2>
 
-    <label>Utilisateur :</label>
-    <select id="user">
-      <option value="">Sélectionner...</option>
-      <option>Sébastien</option>
-      <option>Cyril</option>
-      <option>Claire</option>
-      <option>Anna</option>
-      <option>Léo</option>
-      <option>Laurent</option>
-      <option>Simon</option>
-      <option>Clément</option>
-      <option>Philippe</option>
-      <option>Sadock</option>
-      <option>Thomas</option>
-      <option>Jonathan</option>
-      <option>Loïc</option>
-      <option>Manu</option>
-      <option>Autre</option>
-    </select>
+  <label>Utilisateur</label>
+  <select id="user">
+    <option value="">Sélectionner…</option>
+    <option>Sébastien</option><option>Cyril</option><option>Claire</option><option>Anna</option>
+    <option>Léo</option><option>Laurent</option><option>Simon</option><option>Clément</option>
+    <option>Philippe</option><option>Sadock</option><option>Thomas</option><option>Jonathan</option>
+    <option>Loïc</option><option>Manu</option><option>Autre</option>
+  </select>
+  <input id="userOther" style="display:none;width:100%;padding:8px;margin-top:8px" placeholder="Nom…">
 
-    <label>Localisation :</label>
-    <select id="location">
-      <option value="">Sélectionner...</option>
-      <option>Bureau des régisseurs</option>
-      <option>Atelier Lumière</option>
-      <option>Studio Son</option>
-      <option>Atelier Cub</option>
-      <option>Atelier GS</option>
-      <option>Régie Cub</option>
-      <option>Régie GS</option>
-      <option>Autre</option>
-    </select>
+  <label style="margin-top:15px">Localisation</label>
+  <select id="location">
+    <option value="">Sélectionner…</option>
+    <option>Bureau des régisseurs</option><option>Atelier Lumière</option><option>Studio Son</option>
+    <option>Atelier Cub</option><option>Atelier GS</option><option>Régie Cub</option><option>Régie GS</option>
+    <option>Autre</option>
+  </select>
+  <input id="locOther" style="display:none;width:100%;padding:8px;margin-top:8px" placeholder="Lieu…">
 
-    <button onclick="updateLocation()">Valider</button>
+  <button onclick="save()">Mettre à jour</button>
 
-    <div class="result" id="result">Aucune information encore</div>
+  <div class="status">
+    <strong>Dernière localisation :</strong>
+    <div id="last">Chargement…</div>
+    <div id="time" style="font-size:12px;color:#555"></div>
   </div>
+</div>
 
-  <script>
-    function updateLocation() {
-      const user = document.getElementById('user').value;
-      const location = document.getElementById('location').value;
+<script>
+// ------------ CONFIG -----------------
+const TOKEN = "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"; 
+const USER = "lesondutnt-alt";
+const REPO = "dymo-N-B";
+const FILE = "last.json";
+// -------------------------------------
 
-      if (!user || !location) {
-        document.getElementById('result').textContent = "Veuillez sélectionner un nom et un lieu.";
-        return;
-      }
+// Show custom fields
+user.onchange = () => userOther.style.display = user.value==="Autre" ? "block" : "none";
+location.onchange = () => locOther.style.display = location.value==="Autre" ? "block" : "none";
 
-      document.getElementById('result').textContent = `${user} indique que la Dymo est : ${location}`;
-    }
-  </script>
+// Load last location (GET)
+async function load() {
+  const res = await fetch(`https://raw.githubusercontent.com/${USER}/${REPO}/main/${FILE}?t=${Date.now()}`);
+  if (!res.ok) { last.textContent="Aucune info"; return; }
+  const data = await res.json();
+  last.textContent = `${data.user} dit : ${data.location}`;
+  time.textContent = "Mis à jour le " + new Date(data.ts).toLocaleString();
+}
+load();
+
+// Save new location (PUT)
+async function save() {
+  let u = user.value === "Autre" ? userOther.value : user.value;
+  let l = location.value === "Autre" ? locOther.value : location.value;
+  if (!u || !l) return alert("Remplissez tous les champs.");
+
+  // Prepare data
+  const content = {
+    message: "Update dymo location",
+    content: btoa(JSON.stringify({ user: u, location: l, ts: Date.now() })),
+  };
+
+  // Get SHA of last commit
+  let sha = null;
+  try {
+    const meta = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`);
+    const json = await meta.json();
+    sha = json.sha;
+  } catch {}
+
+  if (sha) content.sha = sha;
+
+  // Push update to GitHub
+  await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`, {
+    method: "PUT",
+    headers: { "Authorization": `Bearer ${TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify(content)
+  });
+
+  alert("Localisation mise à jour !");
+  load();
+}
+</script>
 </body>
 </html>
