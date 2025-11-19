@@ -63,7 +63,7 @@
 
 <script>
 // -------- CONFIG SECURISEE ----------
-const TOKEN = "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"
+const TOKEN = "VOTRE_TOKEN_ICI";  // ⚠️ NE PAS METTRE UN VRAI TOKEN EN PUBLIC
 const USER = "lesondutnt-alt";
 const REPO = "dymo-N-B";
 const FILE = "last.json";
@@ -101,4 +101,56 @@ async function save() {
     const selectedLoc = location.value;
 
     // valeurs finales
-    const u = selectedUser === "Autre" ? userOther.value.tri
+    const u = selectedUser === "Autre" ? userOther.value.trim() : selectedUser;
+    const l = selectedLoc === "Autre" ? locOther.value.trim() : selectedLoc;
+
+    // ---- Validation claire ----
+    if (!selectedUser)
+        return alert("Veuillez sélectionner un utilisateur.");
+
+    if (selectedUser === "Autre" && !u)
+        return alert("Veuillez entrer un nom.");
+
+    if (!selectedLoc)
+        return alert("Veuillez sélectionner une localisation.");
+
+    if (selectedLoc === "Autre" && !l)
+        return alert("Veuillez entrer un lieu.");
+
+    // --- Préparation du JSON ---
+    const payload = { user: u, location: l, ts: Date.now() };
+
+    const content = {
+        message: "Update dymo location",
+        content: btoa(JSON.stringify(payload))
+    };
+
+    // récupérer le SHA
+    try {
+        const meta = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`);
+        const json = await meta.json();
+        if (json.sha) content.sha = json.sha;
+    } catch {}
+
+    // envoyer la mise à jour
+    try {
+        await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${TOKEN}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(content)
+        });
+
+        alert("Localisation mise à jour !");
+        load();
+
+    } catch (e) {
+        console.error(e);
+        alert("Erreur lors de l'enregistrement.");
+    }
+}
+</script>
+</body>
+</html>
