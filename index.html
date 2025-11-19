@@ -1,61 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Localisation Dymo</title>
+<style>
+  body { font-family: Arial; background:#f6f6f6; padding:20px; }
+  .card { background:white; padding:20px; max-width:500px; margin:auto; border-radius:12px; box-shadow:0 0 10px #0002; }
+  select, button { width:100%; padding:10px; border-radius:8px; margin-top:10px; }
+  .status { margin-top:20px; padding:10px; background:#eee; border-radius:8px; }
+  input { width:100%; padding:8px; margin-top:8px; border-radius:6px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Dymo Noir sur Blanc — Localisation</h2>
+
+  <label>Utilisateur</label>
+  <select id="user">
+    <option value="">Sélectionner…</option>
+    <option value="Sébastien">Sébastien</option>
+    <option value="Cyril">Cyril</option>
+    <option value="Claire">Claire</option>
+    <option value="Anna">Anna</option>
+    <option value="Léo">Léo</option>
+    <option value="Laurent">Laurent</option>
+    <option value="Simon">Simon</option>
+    <option value="Clément">Clément</option>
+    <option value="Philippe">Philippe</option>
+    <option value="Sadock">Sadock</option>
+    <option value="Thomas">Thomas</option>
+    <option value="Jonathan">Jonathan</option>
+    <option value="Loïc">Loïc</option>
+    <option value="Manu">Manu</option>
+    <option value="Autre">Autre</option>
+  </select>
+
+  <input id="userOther" style="display:none" placeholder="Nom…">
+
+  <label style="margin-top:15px">Localisation</label>
+  <select id="location">
+    <option value="">Sélectionner…</option>
+    <option value="Bureau des régisseurs">Bureau des régisseurs</option>
+    <option value="Atelier Lumière">Atelier Lumière</option>
+    <option value="Studio Son">Studio Son</option>
+    <option value="Atelier Cub">Atelier Cub</option>
+    <option value="Atelier GS">Atelier GS</option>
+    <option value="Régie Cub">Régie Cub</option>
+    <option value="Régie GS">Régie GS</option>
+    <option value="Autre">Autre</option>
+  </select>
+
+  <input id="locOther" style="display:none" placeholder="Lieu…">
+
+  <button onclick="save()">Mettre à jour</button>
+
+  <div class="status">
+    <strong>Dernière localisation :</strong>
+    <div id="last">Chargement…</div>
+    <div id="time" style="font-size:12px;color:#555"></div>
+  </div>
+</div>
+
+<script>
+// -------- CONFIG SECURISEE ----------
+const TOKEN = "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"
+const USER = "lesondutnt-alt";
+const REPO = "dymo-N-B";
+const FILE = "last.json";
+// ------------------------------------
+
+// Affichage des champs Autre
+user.onchange = () => {
+    userOther.style.display = user.value === "Autre" ? "block" : "none";
+};
+
+location.onchange = () => {
+    locOther.style.display = location.value === "Autre" ? "block" : "none";
+};
+
+// ---- CHARGER L’INFO ----
+async function load() {
+    try {
+        const res = await fetch(`https://raw.githubusercontent.com/${USER}/${REPO}/main/${FILE}?t=${Date.now()}`);
+        if (!res.ok) throw 0;
+
+        const data = await res.json();
+        last.textContent = `${data.user} dit : ${data.location}`;
+        time.textContent = "Mis à jour le " + new Date(data.ts).toLocaleString();
+    } catch {
+        last.textContent = "Aucune info disponible";
+    }
+}
+load();
+
+// ---- ENREGISTRER ----
 async function save() {
-    // ---- Récupération des valeurs ----
+
+    // valeurs sélectionnées
     const selectedUser = user.value;
     const selectedLoc = location.value;
 
-    const u = selectedUser === "Autre" ? userOther.value.trim() : selectedUser;
-    const l = selectedLoc === "Autre" ? locOther.value.trim() : selectedLoc;
-
-    // ---- Vérification des champs ----
-    if (!selectedUser) 
-        return alert("Veuillez sélectionner un utilisateur.");
-
-    if (!u) 
-        return alert("Veuillez entrer un nom.");
-
-    if (!selectedLoc) 
-        return alert("Veuillez sélectionner une localisation.");
-
-    if (!l) 
-        return alert("Veuillez entrer un lieu.");
-
-    // ---- Construction du fichier JSON ----
-    const payload = {
-        user: u,
-        location: l,
-        ts: Date.now()
-    };
-
-    const content = {
-        message: "Update dymo location",
-        content: btoa(JSON.stringify(payload))
-    };
-
-    // ---- Récupération du SHA avant mise à jour ----
-    try {
-        const meta = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`);
-        const json = await meta.json();
-        if (json.sha) content.sha = json.sha;
-    } catch (e) {
-        console.warn("Impossible de récupérer le SHA :", e);
-    }
-
-    // ---- Envoi vers GitHub ----
-    try {
-        await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`, {
-            method: "PUT",
-            headers: {
-                "Authorization": `Bearer ${TOKEN}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(content)
-        });
-
-        alert("Localisation mise à jour !");
-        load();
-
-    } catch (e) {
-        console.error(e);
-        alert("Erreur lors de l'enregistrement !");
-    }
-}
+    // valeurs finales
+    const u = selectedUser === "Autre" ? userOther.value.tri
