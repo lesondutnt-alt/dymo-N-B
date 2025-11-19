@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Localisation de la Dymo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f6f6;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 450px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #e8e8e8;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #dcdcdc;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dymo Noir sur Blanc – Localisation</h1>
+
+    <label>Utilisateur :</label>
+    <select id="user">
+      <option value="">Sélectionner...</option>
+      <option>Sébastien</option>
+      <option>Cyril</option>
+      <option>Claire</option>
+      <option>Anna</option>
+      <option>Léo</option>
+      <option>Laurent</option>
+      <option>Simon</option>
+      <option>Clément</option>
+      <option>Philippe</option>
+      <option>Sadock</option>
+      <option>Thomas</option>
+      <option>Jonathan</option>
+      <option>Loïc</option>
+      <option>Manu</option>
+      <option>Autre</option>
+    </select>
+
+    <label>Localisation :</label>
+    <select id="location">
+      <option value="">Sélectionner...</option>
+      <option>Bureau des régisseurs</option>
+      <option>Atelier Lumière</option>
+      <option>Studio Son</option>
+      <option>Atelier Cub</option>
+      <option>Atelier GS</option>
+      <option>Régie Cub</option>
+      <option>Régie GS</option>
+      <option>Autre</option>
+    </select>
+
+    <button onclick="updateLocation()">Valider</button>
+
+    <div class="result" id="result">Aucune information encore</div>
+  </div>
+
+  <script>
+    function updateLocation() {
+      const user = document.getElementById('user').value;
+      const location = document.getElementById('location').value;
+
+      if (!user || !location) {
+        document.getElementById('result').textContent = "Veuillez sélectionner un nom et un lieu.";
+        return;
+      }
+
+      document.getElementById('result').textContent = `${user} indique que la Dymo est : ${location}`;
+    }
+  </script>
+</body>
+</html>
