@@ -2,147 +2,68 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Localisation Dymo</title>
+<title>Suivi d'utilisation Dymo</title>
 <style>
-  body { font-family: Arial; background:#f6f6f6; padding:20px; }
-  .card { background:white; padding:20px; max-width:500px; margin:auto; border-radius:12px; box-shadow:0 0 10px #0002; }
-  select, button { width:100%; padding:10px; border-radius:8px; margin-top:10px; }
-  .status { margin-top:20px; padding:10px; background:#eee; border-radius:8px; }
-  input { width:100%; padding:8px; margin-top:8px; border-radius:6px; }
+    body { font-family: Arial; padding: 20px; }
+    label { font-weight: bold; }
+    .last { background:#f0f0f0; padding:10px; border-radius:5px; margin-top:20px; }
+    button { padding:10px 20px; margin-top:10px; cursor:pointer; }
 </style>
 </head>
 <body>
-<div class="card">
-  <h2>Dymo Noir sur Blanc — Localisation</h2>
 
-  <label>Utilisateur</label>
-  <select id="user">
-    <option value="Sébastien" selected>Sébastien</option>
-    <option value="Cyril">Cyril</option>
-    <option value="Claire">Claire</option>
-    <option value="Anna">Anna</option>
-    <option value="Léo">Léo</option>
-    <option value="Laurent">Laurent</option>
-    <option value="Simon">Simon</option>
-    <option value="Clément">Clément</option>
-    <option value="Philippe">Philippe</option>
-    <option value="Sadock">Sadock</option>
-    <option value="Thomas">Thomas</option>
-    <option value="Jonathan">Jonathan</option>
-    <option value="Loïc">Loïc</option>
-    <option value="Manu">Manu</option>
-    <option value="Autre">Autre</option>
-  </select>
+<h2>📌 Suivi d'utilisation de la Dymo</h2>
 
-  <input id="userOther" style="display:none" placeholder="Nom…">
+<label>Utilisateur :</label><br>
+<select id="user">
+    <option>Sébastien</option><option>Cyril</option><option>Claire</option>
+    <option>Anna</option><option>Léo</option><option>Laurent</option>
+    <option>Simon</option><option>Clément</option><option>Philippe</option>
+    <option>Sadock</option><option>Thomas</option><option>Jonathan</option>
+    <option>Loïc</option><option>Manu</option><option>Autre</option>
+</select><br><br>
 
-  <label style="margin-top:15px">Localisation</label>
-  <select id="location">
-    <option value="Bureau des régisseurs" selected>Bureau des régisseurs</option>
-    <option value="Atelier Lumière">Atelier Lumière</option>
-    <option value="Studio Son">Studio Son</option>
-    <option value="Atelier Cub">Atelier Cub</option>
-    <option value="Atelier GS">Atelier GS</option>
-    <option value="Régie Cub">Régie Cub</option>
-    <option value="Régie GS">Régie GS</option>
-    <option value="Autre">Autre</option>
-  </select>
+<label>Lieu :</label><br>
+<select id="place">
+    <option>Bureau de régisseurs</option><option>Atelier lumière</option>
+    <option>Studio son</option><option>Atelier GS</option>
+    <option>Atelier cub</option><option>Régie GS</option>
+    <option>Régie cub</option><option>Autre</option>
+</select><br><br>
 
-  <input id="locOther" style="display:none" placeholder="Lieu…">
+<button onclick="save()">Enregistrer</button>
 
-  <button onclick="save()">Mettre à jour</button>
-
-  <div class="status">
-    <strong>Dernière localisation :</strong>
-    <div id="last">Chargement…</div>
-    <div id="time" style="font-size:12px;color:#555"></div>
-  </div>
-</div>
+<h3>🕒 Dernière utilisation :</h3>
+<div class="last" id="lastEntry">Chargement…</div>
 
 <script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbwqonY6Qg-9z3kQBtvLwp7SRGTYuk8wHTkAEQoEYklpte8q6AKn6FcPhsJJyF8dWEQlmA/exec";
 
+function save() {
+    const user = document.getElementById("user").value;
+    const place = document.getElementById("place").value;
 
-// Références aux éléments
-const user = document.getElementById('user');
-const userOther = document.getElementById('userOther');
-const locationSelect = document.getElementById('location');
-const locOther = document.getElementById('locOther');
-const last = document.getElementById('last');
-const time = document.getElementById('time');
-
-// Affichage des champs "Autre"
-user.addEventListener('change', () => {
-    userOther.style.display = user.value === "Autre" ? "block" : "none";
-});
-
-locationSelect.addEventListener('change', () => {
-    locOther.style.display = locationSelect.value === "Autre" ? "block" : "none";
-});
-
-// ---- CHARGER L’INFO ----
-async function load() {
-    try {
-        const res = await fetch(`https://raw.githubusercontent.com/${USER}/${REPO}/main/${FILE}?t=${Date.now()}`);
-        if (!res.ok) throw new Error();
-
-        const data = await res.json();
-        last.textContent = `${data.user} dit : ${data.location}`;
-        time.textContent = "Mis à jour le " + new Date(data.ts).toLocaleString();
-    } catch {
-        last.textContent = "Aucune info disponible";
-        time.textContent = "";
-    }
-}
-load();
-
-// ---- ENREGISTRER ----
-async function save() {
-
-    // valeurs sélectionnées
-    const selectedUser = user.value;
-    const selectedLoc = locationSelect.value;
-
-    // valeurs finales
-    const u = selectedUser === "Autre" ? userOther.value.trim() : selectedUser;
-    const l = selectedLoc === "Autre" ? locOther.value.trim() : selectedLoc;
-
-    // ---- Validation ----
-    if (!u) return alert("Veuillez entrer un nom d'utilisateur.");
-    if (!l) return alert("Veuillez entrer une localisation.");
-
-    // --- Préparation du JSON ---
-    const payload = { user: u, location: l, ts: Date.now() };
-    const content = {
-        message: "Update dymo location",
-        content: btoa(JSON.stringify(payload))
-    };
-
-    // récupérer le SHA
-    try {
-        const meta = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`);
-        const json = await meta.json();
-        if (json.sha) content.sha = json.sha;
-    } catch {}
-
-    // envoyer la mise à jour
-    try {
-        await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/${FILE}`, {
-            method: "PUT",
-            headers: {
-                "Authorization": `Bearer ${TOKEN}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(content)
+    fetch(SHEET_URL + "?user=" + encodeURIComponent(user) + "&place=" + encodeURIComponent(place))
+        .then(res => res.text())
+        .then(() => {
+            alert("Enregistré !");
+            loadLast();
         });
-
-        alert("Localisation mise à jour !");
-        load();
-
-    } catch (e) {
-        console.error(e);
-        alert("Erreur lors de l'enregistrement.");
-    }
 }
+
+function loadLast() {
+    fetch(SHEET_URL + "?last=1")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("lastEntry").innerHTML =
+                `👤 Utilisateur : <b>${data.user}</b><br>
+                 📍 Lieu : <b>${data.place}</b><br>
+                 🕒 Date : <b>${data.date}</b>`;
+        });
+}
+
+loadLast();
 </script>
+
 </body>
 </html>
