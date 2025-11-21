@@ -1,68 +1,217 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta charset="UTF-8">
-<title>Suivi d'utilisation Dymo</title>
+<title>Dymo Noir sur Blanc</title>
+
 <style>
-    body { font-family: Arial; padding: 20px; }
-    label { font-weight: bold; }
-    .last { background:#f0f0f0; padding:10px; border-radius:5px; margin-top:20px; }
-    button { padding:10px 20px; margin-top:10px; cursor:pointer; }
+    body {
+        font-family: Arial, sans-serif;
+        padding: 10px;
+        background: #fafafa;
+        margin: 0;
+    }
+
+    h2 { text-align: center; margin-bottom: 15px; }
+
+    .card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    label { 
+        font-weight: bold; 
+        display: block;
+        margin-top: 10px;
+    }
+
+    select, button, input[type="text"] {
+        width: 100%;
+        padding: 14px;
+        margin-top: 6px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 18px;
+    }
+
+    button {
+        background: #007BFF;
+        color: white;
+        border: none;
+        margin-top: 14px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    button:active {
+        background: #005FCC;
+    }
+
+    #lastInfo {
+        font-size: 20px;
+        margin-top: 10px;
+        color: #333;
+    }
+
+    #history {
+        max-height: 350px;
+        overflow-y: auto;
+        padding-right: 5px;
+    }
+
+    .history-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #e5e5e5;
+        font-size: 17px;
+    }
+
+    .history-item small {
+        font-size: 14px;
+        color: #666;
+    }
 </style>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
 </head>
 <body>
 
-<h2>📌 Suivi d'utilisation de la Dymo</h2>
+<h2>Dymo Noir sur Blanc</h2>
 
-<label>Utilisateur :</label><br>
-<select id="user">
-    <option>Sébastien</option><option>Cyril</option><option>Claire</option>
-    <option>Anna</option><option>Léo</option><option>Laurent</option>
-    <option>Simon</option><option>Clément</option><option>Philippe</option>
-    <option>Sadock</option><option>Thomas</option><option>Jonathan</option>
-    <option>Loïc</option><option>Manu</option><option>Autre</option>
-</select><br><br>
+<div class="card">
+    <h3>Dernière info :</h3>
+    <div id="lastInfo">Chargement…</div>
+</div>
 
-<label>Lieu :</label><br>
-<select id="place">
-    <option>Bureau de régisseurs</option><option>Atelier lumière</option>
-    <option>Studio son</option><option>Atelier GS</option>
-    <option>Atelier cub</option><option>Régie GS</option>
-    <option>Régie cub</option><option>Autre</option>
-</select><br><br>
+<div class="card">
+    <h3>Mettre à jour</h3>
 
-<button onclick="save()">Enregistrer</button>
+    <label>Utilisateur :</label>
+    <select id="user" onchange="toggleUserOther()">
+        <option>Sébastien</option>
+        <option>Cyril</option>
+        <option>Claire</option>
+        <option>Anna</option>
+        <option>Léo</option>
+        <option>Laurent</option>
+        <option>Simon</option>
+        <option>Clément</option>
+        <option>Philippe</option>
+        <option>Sadock</option>
+        <option>Thomas</option>
+        <option>Jonathan</option>
+        <option>Loïc</option>
+        <option>Manu</option>
+        <option>Autre</option>
+    </select>
 
-<h3>🕒 Dernière utilisation :</h3>
-<div class="last" id="lastEntry">Chargement…</div>
+    <input type="text" id="userOther" placeholder="Nom de l'utilisateur" style="display:none;">
+
+    <label>Lieu :</label>
+    <select id="place" onchange="togglePlaceOther()">
+        <option>Bureau de régisseurs</option>
+        <option>Atelier lumière</option>
+        <option>Studio son</option>
+        <option>Atelier GS</option>
+        <option>Atelier cub</option>
+        <option>Régie GS</option>
+        <option>Régie cub</option>
+        <option>Autre</option>
+    </select>
+
+    <input type="text" id="placeOther" placeholder="Nom du lieu" style="display:none;">
+
+    <button onclick="saveInfo()">Enregistrer</button>
+</div>
+
+<div class="card">
+    <h3>Derniers utilisateurs (10 max)</h3>
+    <div id="history">Chargement…</div>
+</div>
 
 <script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbwqonY6Qg-9z3kQBtvLwp7SRGTYuk8wHTkAEQoEYklpte8q6AKn6FcPhsJJyF8dWEQlmA/exec";
+    const firebaseConfig = {
+        apiKey: "AIzaSyAvATGSHSN_JCZJQByxjuVFrDyyrCly264",
+        authDomain: "dymo-tc.firebaseapp.com",
+        databaseURL: "https://dymo-tc-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "dymo-tc",
+        storageBucket: "dymo-tc.firebasestorage.app",
+        messagingSenderId: "905599820204",
+        appId: "1:905599820204:web:a529f644d2fbaa51379a09"
+    };
 
-function save() {
-    const user = document.getElementById("user").value;
-    const place = document.getElementById("place").value;
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    fetch(SHEET_URL + "?user=" + encodeURIComponent(user) + "&place=" + encodeURIComponent(place))
-        .then(res => res.text())
-        .then(() => {
-            alert("Enregistré !");
-            loadLast();
+    function toggleUserOther() {
+        document.getElementById("userOther").style.display =
+            document.getElementById("user").value === "Autre" ? "block" : "none";
+    }
+    function togglePlaceOther() {
+        document.getElementById("placeOther").style.display =
+            document.getElementById("place").value === "Autre" ? "block" : "none";
+    }
+
+    db.ref("dymo/last").on("value", snapshot => {
+        const data = snapshot.val();
+        if (data) {
+            document.getElementById("lastInfo").innerHTML =
+                `<strong>${data.user}</strong> à <strong>${data.place}</strong><br>
+                 <small>${data.time}</small>`;
+        }
+    });
+
+    function loadHistory() {
+        db.ref("dymo/history").once("value", snapshot => {
+            const records = snapshot.val();
+            const container = document.getElementById("history");
+            container.innerHTML = "";
+
+            if (!records) {
+                container.innerHTML = "Aucun historique.";
+                return;
+            }
+
+            const list = Object.entries(records).map(([key, val]) => ({ key, ...val }))
+                .sort((a, b) => new Date(b.time) - new Date(a.time));
+
+            if (list.length > 10) {
+                list.slice(10).forEach(entry => db.ref("dymo/history/" + entry.key).remove());
+            }
+
+            list.slice(0, 10).forEach(entry => {
+                container.innerHTML += `
+                    <div class="history-item">
+                        <strong>${entry.user}</strong> — ${entry.place}<br>
+                        <small>${entry.time}</small>
+                    </div>`;
+            });
         });
-}
+    }
 
-function loadLast() {
-    fetch(SHEET_URL + "?last=1")
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById("lastEntry").innerHTML =
-                `👤 Utilisateur : <b>${data.user}</b><br>
-                 📍 Lieu : <b>${data.place}</b><br>
-                 🕒 Date : <b>${data.date}</b>`;
-        });
-}
+    db.ref("dymo/history").on("value", loadHistory);
 
-loadLast();
+    function saveInfo() {
+        let user = document.getElementById("user").value;
+        if (user === "Autre") user = document.getElementById("userOther").value || "Inconnu";
+
+        let place = document.getElementById("place").value;
+        if (place === "Autre") place = document.getElementById("placeOther").value || "Inconnu";
+
+        const time = new Date().toLocaleString("fr-FR");
+
+        db.ref("dymo/last").set({ user, place, time });
+        db.ref("dymo/history").push().set({ user, place, time });
+
+        alert("Information enregistrée !");
+    }
 </script>
 
 </body>
